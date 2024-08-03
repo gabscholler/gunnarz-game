@@ -1,0 +1,17 @@
+[0;1;32m●[0m mongod.service - MongoDB Database Server
+     Loaded: loaded (]8;;file://red-worried-bluebell/usr/lib/systemd/system/mongod.service/usr/lib/systemd/system/mongod.service]8;;; [0;1;32menabled[0m; preset: [0;1;38;5;185mdisabled[0m)
+     Active: [0;1;32mactive (running)[0m since Sat 2024-08-03 22:46:45 BST; 6min ago
+       Docs: ]8;;https://docs.mongodb.org/manualhttps://docs.mongodb.org/manual]8;;
+   Main PID: 28726 (mongod)
+     Memory: 86.2M
+        CPU: 2.295s
+     CGroup: /system.slice/mongod.service
+             └─[0;38;5;245m28726 /usr/bin/mongod -f /etc/mongod.conf[0m
+
+Aug 03 22:46:44 red-worried-bluebell systemd[1]: Starting MongoDB Database Server...
+Aug 03 22:46:44 red-worried-bluebell mongod[28724]: about to fork child process, waiting until server is ready for connections.
+Aug 03 22:46:44 red-worried-bluebell mongod[28726]: forked process: 28726
+Aug 03 22:46:45 red-worried-bluebell mongod[28724]: child process started successfully, parent exiting
+Aug 03 22:46:45 red-worried-bluebell systemd[1]: Started MongoDB Database Server.
+Aug 03 22:46:50 red-worried-bluebell systemd[1]: [0;1;39m[0;1;31m[0;1;39m]8;;file://red-worried-bluebell/usr/lib/systemd/system/mongod.service/usr/lib/systemd/system/mongod.service]8;;:17: PIDFile= references a path below legacy directory /var/run/, updating /var/run/mongodb/mongod.pid → /run/mongodb/mongod.pid; please update the unit file accordingly.[0m
+Aug 03 22:51:37 red-worried-bluebell systemd[1]: [0;1;39m[0;1;31m[0;1;39m]8;;file://red-worried-bluebell/usr/lib/systemd/system/mongod.service/usr/lib/systemd/system/mongod.service]8;;:17: PIDFile= references a path below legacy directory /var/run/, updating /var/run/mongodb/mongod.pid → /run/mongodb/mongod.pid; please update the unit file accordingly.[0m
