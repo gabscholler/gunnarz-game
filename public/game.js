@@ -8,6 +8,7 @@ canvas.height = window.innerHeight;
 const players = {};
 const playerRadius = 20;
 const moveSpeed = 5;
+const smoothingFactor = 0.1; // Factor for smoothing position updates
 
 socket.on('connect', () => {
   console.log('Connected to server');
@@ -29,9 +30,8 @@ socket.on('newPlayer', (newPlayer) => {
 
 socket.on('move', (data) => {
   if (players[data.id]) {
-    players[data.id].x = data.x;
-    players[data.id].y = data.y;
-    draw();
+    players[data.id].targetX = data.x; // Set target position
+    players[data.id].targetY = data.y;
   }
 });
 
@@ -58,6 +58,7 @@ function update() {
     if (keys['s'] && player.y + playerRadius + moveSpeed <= canvas.height) player.y += moveSpeed;
     if (keys['d'] && player.x + playerRadius + moveSpeed <= canvas.width) player.x += moveSpeed;
 
+    // Avoid overlap with other players
     for (let id in players) {
       if (id !== socket.id) {
         let otherPlayer = players[id];
@@ -74,6 +75,15 @@ function update() {
     }
 
     socket.emit('move', { x: player.x, y: player.y });
+  }
+
+  // Interpolate positions
+  for (let id in players) {
+    let player = players[id];
+    if (player.targetX !== undefined && player.targetY !== undefined) {
+      player.x += (player.targetX - player.x) * smoothingFactor;
+      player.y += (player.targetY - player.y) * smoothingFactor;
+    }
   }
 }
 
