@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gunnarz</title>
+    <title>Gunnarz.io</title>
     <style>
-        body { 
-            margin: 0; 
+        body {
+            margin: 0;
             font-family: Arial, sans-serif;
-            background-color: #282c34;
+            background: url('background-image-url') no-repeat center center fixed;
+            background-size: cover;
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -17,20 +18,22 @@
             height: 100vh;
             overflow: hidden;
         }
-        #gameCanvas { 
-            display: none;
-        }
         .menu {
             display: flex;
             flex-direction: column;
             align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 900px;
         }
         .menu h1 {
             font-size: 3em;
             margin-bottom: 20px;
         }
-        .menu button {
-            padding: 10px 20px;
+        .menu button, .menu select, .menu input[type="color"] {
+            padding: 10px;
             font-size: 1.2em;
             margin: 10px;
             cursor: pointer;
@@ -38,14 +41,20 @@
             border: none;
             border-radius: 5px;
         }
-        .menu select {
-            padding: 10px;
-            font-size: 1em;
-            margin: 10px;
+        .weapon-select, .armor-select, .color-select {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
         }
-        .menu input[type="color"] {
-            margin: 10px;
-            padding: 10px;
+        .weapon-select img, .color-select div, .armor-select img {
+            width: 50px;
+            height: 50px;
+            margin: 0 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .weapon-select img.selected, .color-select div.selected, .armor-select img.selected {
+            border-color: #61dafb;
         }
         .changelog {
             position: absolute;
@@ -58,23 +67,36 @@
 </head>
 <body>
     <div class="menu" id="menu">
-        <h1>Gunnarz</h1>
-        <select id="weaponSelect">
-            <option value="pistol">Pistol</option>
-            <option value="smg">SMG</option>
-            <option value="shotgun">Shotgun</option>
-            <option value="assaultRifle">Assault Rifle</option>
-            <option value="sniper">Sniper</option>
-            <option value="lmg">LMG</option>
+        <h1>Gunnarz.io</h1>
+        <div class="weapon-select">
+            <img src="path/to/pistol.png" alt="Pistol" data-weapon="pistol">
+            <img src="path/to/smg.png" alt="SMG" data-weapon="smg">
+            <img src="path/to/shotgun.png" alt="Shotgun" data-weapon="shotgun">
+            <img src="path/to/assault_rifle.png" alt="Assault Rifle" data-weapon="assaultRifle">
+            <img src="path/to/sniper.png" alt="Sniper" data-weapon="sniper">
+            <img src="path/to/lmg.png" alt="LMG" data-weapon="lmg">
+        </div>
+        <div class="color-select">
+            <div style="background-color: #ff5733;" data-color="#ff5733"></div>
+            <div style="background-color: #ffa500;" data-color="#ffa500"></div>
+            <div style="background-color: #ffff66;" data-color="#ffff66"></div>
+            <div style="background-color: #33cc33;" data-color="#33cc33"></div>
+            <div style="background-color: #3366ff;" data-color="#3366ff"></div>
+            <div style="background-color: #cc33ff;" data-color="#cc33ff"></div>
+        </div>
+        <div class="armor-select">
+            <img src="path/to/no_armor.png" alt="No Armor" data-armor="none">
+            <img src="path/to/light_armor.png" alt="Light Armor" data-armor="light">
+            <img src="path/to/medium_armor.png" alt="Medium Armor" data-armor="medium">
+            <img src="path/to/heavy_armor.png" alt="Heavy Armor" data-armor="heavy">
+        </div>
+        <button onclick="startGame()">PLAY</button>
+        <button>SERVERS</button>
+        <select id="gameModeSelect">
+            <option value="ffa">FFA</option>
+            <option value="tdm">TDM</option>
+            <option value="dom">DOM</option>
         </select>
-        <select id="armorSelect">
-            <option value="none">No Armor</option>
-            <option value="light">Light Armor</option>
-            <option value="medium">Medium Armor</option>
-            <option value="heavy">Heavy Armor</option>
-        </select>
-        <input type="color" id="colorPicker" value="#0000ff">
-        <button onclick="startGame()">Start Game</button>
     </div>
     <canvas id="gameCanvas"></canvas>
     <div class="changelog">
@@ -91,23 +113,46 @@
         const canvas = document.getElementById('gameCanvas');
         const context = canvas.getContext('2d');
         const menu = document.getElementById('menu');
-        const weaponSelect = document.getElementById('weaponSelect');
-        const armorSelect = document.getElementById('armorSelect');
-        const colorPicker = document.getElementById('colorPicker');
+        const weaponSelect = document.querySelectorAll('.weapon-select img');
+        const armorSelect = document.querySelectorAll('.armor-select img');
+        const colorSelect = document.querySelectorAll('.color-select div');
+        let selectedWeapon = 'pistol';
+        let selectedArmor = 'none';
+        let selectedColor = '#ff5733';
+
+        weaponSelect.forEach(img => {
+            img.addEventListener('click', () => {
+                weaponSelect.forEach(i => i.classList.remove('selected'));
+                img.classList.add('selected');
+                selectedWeapon = img.getAttribute('data-weapon');
+            });
+        });
+
+        armorSelect.forEach(img => {
+            img.addEventListener('click', () => {
+                armorSelect.forEach(i => i.classList.remove('selected'));
+                img.classList.add('selected');
+                selectedArmor = img.getAttribute('data-armor');
+            });
+        });
+
+        colorSelect.forEach(div => {
+            div.addEventListener('click', () => {
+                colorSelect.forEach(d => d.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedColor = div.getAttribute('data-color');
+            });
+        });
 
         function startGame() {
             menu.style.display = 'none';
             canvas.style.display = 'block';
 
-            const weapon = weaponSelect.value;
-            const armor = armorSelect.value;
-            const color = colorPicker.value;
-
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
 
             // Emit event to server with loadout information
-            socket.emit('startGame', { weapon, armor, color });
+            socket.emit('startGame', { weapon: selectedWeapon, armor: selectedArmor, color: selectedColor });
 
             gameLoop();
         }
