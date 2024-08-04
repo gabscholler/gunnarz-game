@@ -1,15 +1,39 @@
 const express = require('express');
-const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
+
 const app = express();
-const port = process.env.PORT || 3000;
+const server = http.createServer(app);
+const io = socketIo(server);
 
-app.use(express.static(path.join(__dirname, 'public')));
+const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.use(express.static('public'));
+
+let players = {};
+
+io.on('connection', (socket) => {
+  console.log('New client connected', socket.id);
+  let color = '#' + Math.floor(Math.random() * 16777215).toString(16); // Random color
+  players[socket.id] = { x: 100, y: 100, color: color }; // Initial position with color
+
+  socket.emit('currentPlayers', players);
+  socket.broadcast.emit('newPlayer', { id: socket.id, x: 100, y: 100, color: color });
+
+  socket.on('move', (data) => {
+    if (players[socket.id]) {
+      players[socket.id].x = data.x;
+      players[socket.id].y = data.y;
+      io.emit('move', { id: socket.id, x: data.x, y: data.y });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected', socket.id);
+    delete players[socket.id];
+    io.emit('remove', { id: socket.id });
+  });
 });
 
-app.listen(port, () => {
-  console.log(`Game server running at http://localhost:${port}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 

@@ -3,11 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gunnarz Game</title>
+  <title>Multiplayer Lobby</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Gunnarz Game</h1>
-  <p>This is the basic setup of your game.</p>
+  <canvas id="gameCanvas"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
 
