@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gats.io Clone</title>
+    <title>Gunnarz</title>
     <style>
         body { 
             margin: 0; 
             font-family: Arial, sans-serif;
-            background-color: #333;
+            background-color: #282c34;
             color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
         }
         #gameCanvas { 
             display: none;
@@ -18,8 +24,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
         }
         .menu h1 {
             font-size: 3em;
@@ -30,34 +34,31 @@
             font-size: 1.2em;
             margin: 10px;
             cursor: pointer;
+            background-color: #61dafb;
+            border: none;
+            border-radius: 5px;
         }
-        .loadout {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        .loadout select {
+        .menu select {
             padding: 10px;
             font-size: 1em;
             margin: 10px;
         }
-        .loadout button {
-            padding: 10px 20px;
-            font-size: 1.2em;
+        .menu input[type="color"] {
             margin: 10px;
-            cursor: pointer;
+            padding: 10px;
+        }
+        .changelog {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.8em;
+            color: #bbb;
         }
     </style>
 </head>
 <body>
     <div class="menu" id="menu">
-        <h1>Gats.io Clone</h1>
-        <button onclick="showLoadout()">Play</button>
-    </div>
-    <div class="loadout" id="loadout">
-        <h2>Select Your Loadout</h2>
+        <h1>Gunnarz</h1>
         <select id="weaponSelect">
             <option value="pistol">Pistol</option>
             <option value="smg">SMG</option>
@@ -72,36 +73,41 @@
             <option value="medium">Medium Armor</option>
             <option value="heavy">Heavy Armor</option>
         </select>
+        <input type="color" id="colorPicker" value="#0000ff">
         <button onclick="startGame()">Start Game</button>
     </div>
     <canvas id="gameCanvas"></canvas>
+    <div class="changelog">
+        <p>Changelog:</p>
+        <ul>
+            <li>Added new weapon types</li>
+            <li>Improved player movements</li>
+            <li>Fixed various bugs</li>
+        </ul>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const canvas = document.getElementById('gameCanvas');
         const context = canvas.getContext('2d');
         const menu = document.getElementById('menu');
-        const loadout = document.getElementById('loadout');
         const weaponSelect = document.getElementById('weaponSelect');
         const armorSelect = document.getElementById('armorSelect');
-
-        function showLoadout() {
-            menu.style.display = 'none';
-            loadout.style.display = 'flex';
-        }
+        const colorPicker = document.getElementById('colorPicker');
 
         function startGame() {
-            loadout.style.display = 'none';
+            menu.style.display = 'none';
             canvas.style.display = 'block';
 
             const weapon = weaponSelect.value;
             const armor = armorSelect.value;
+            const color = colorPicker.value;
 
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
 
             // Emit event to server with loadout information
-            socket.emit('startGame', { weapon, armor });
+            socket.emit('startGame', { weapon, armor, color });
 
             gameLoop();
         }
@@ -171,6 +177,11 @@
             if (keys['a']) socket.emit('playerMovement', { x: -5, y: 0 });
             if (keys['s']) socket.emit('playerMovement', { x: 0, y: 5 });
             if (keys['d']) socket.emit('playerMovement', { x: 5, y: 0 });
+
+            bullets.forEach((bullet) => {
+                bullet.x += bullet.direction.x * bullet.speed;
+                bullet.y += bullet.direction.y * bullet.speed;
+            });
         }
 
         function draw() {
@@ -178,7 +189,7 @@
 
             for (let id in players) {
                 const player = players[id];
-                context.fillStyle = 'blue';
+                context.fillStyle = player.color;
                 context.fillRect(player.x, player.y, 20, 20);
                 context.fillStyle = 'black';
                 context.fillText(player.health, player.x, player.y - 10);
