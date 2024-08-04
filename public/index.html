@@ -1,18 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiplayer Lobby</title>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gats.io Clone</title>
+    <style>
+        body { 
+            margin: 0; 
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+        }
+        #gameCanvas { 
+            display: none;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .menu h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        .menu button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .loadout {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .loadout select {
+            padding: 10px;
+            font-size: 1em;
+            margin: 10px;
+        }
+        .loadout button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="game.js"></script>
+    <div class="menu" id="menu">
+        <h1>Gats.io Clone</h1>
+        <button onclick="showLoadout()">Play</button>
+    </div>
+    <div class="loadout" id="loadout">
+        <h2>Select Your Loadout</h2>
+        <select id="weaponSelect">
+            <option value="pistol">Pistol</option>
+            <option value="smg">SMG</option>
+            <option value="shotgun">Shotgun</option>
+            <option value="assaultRifle">Assault Rifle</option>
+            <option value="sniper">Sniper</option>
+            <option value="lmg">LMG</option>
+        </select>
+        <select id="armorSelect">
+            <option value="none">No Armor</option>
+            <option value="light">Light Armor</option>
+            <option value="medium">Medium Armor</option>
+            <option value="heavy">Heavy Armor</option>
+        </select>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('gameCanvas');
+        const context = canvas.getContext('2d');
+        const menu = document.getElementById('menu');
+        const loadout = document.getElementById('loadout');
+        const weaponSelect = document.getElementById('weaponSelect');
+        const armorSelect = document.getElementById('armorSelect');
+
+        function showLoadout() {
+            menu.style.display = 'none';
+            loadout.style.display = 'flex';
+        }
+
+        function startGame() {
+            loadout.style.display = 'none';
+            canvas.style.display = 'block';
+
+            const weapon = weaponSelect.value;
+            const armor = armorSelect.value;
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Emit event to server with loadout information
+            socket.emit('startGame', { weapon, armor });
+
+            gameLoop();
+        }
+
+        const keys = {};
+        const players = {};
+        const bullets = [];
+        const powerUps = [];
+
+        document.addEventListener('keydown', (event) => {
+            keys[event.key] = true;
+        });
+
+        document.addEventListener('keyup', (event) => {
+            keys[event.key] = false;
+        });
+
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const angle = Math.atan2(y - canvas.height / 2, x - canvas.width / 2);
+            const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+            socket.emit('shootBullet', { x: canvas.width / 2, y: canvas.height / 2, direction: direction });
+        });
+
+        socket.on('currentPlayers', (currentPlayers) => {
+            Object.keys(currentPlayers).forEach((id) => {
+                players[id] = currentPlayers[id];
+            });
+        });
+
+        socket.on('newPlayer', (player) => {
+            players[player.id] = player;
+        });
+
+        socket.on('playerDisconnected', (id) => {
+            delete players[id];
+        });
+
+        socket.on('playerMoved', (data) => {
+            players[data.id].x = data.x;
+            players[data.id].y = data.y;
+        });
+
+        socket.on('bulletMoved', (bullet) => {
+            bullets.push(bullet);
+        });
+
+        socket.on('playerHit', (data) => {
+            players[data.id].health = data.health;
+        });
+
+        socket.on('newPowerUp', (powerUp) => {
+            powerUps.push(powerUp);
+        });
+
+        socket.on('powerUpUsed', (data) => {
+            const player = players[data.id];
+            if (player) {
+                player[data.type] += data.value;
+            }
+        });
+
+        function update() {
+            if (keys['w']) socket.emit('playerMovement', { x: 0, y: -5 });
+            if (keys['a']) socket.emit('playerMovement', { x: -5, y: 0 });
+            if (keys['s']) socket.emit('playerMovement', { x: 0, y: 5 });
+            if (keys['d']) socket.emit('playerMovement', { x: 5, y: 0 });
+        }
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let id in players) {
+                const player = players[id];
+                context.fillStyle = 'blue';
+                context.fillRect(player.x, player.y, 20, 20);
+                context.fillStyle = 'black';
+                context.fillText(player.health, player.x, player.y - 10);
+            }
+
+            bullets.forEach((bullet) => {
+                context.fillStyle = 'red';
+                context.fillRect(bullet.x, bullet.y, 5, 5);
+            });
+
+            powerUps.forEach((powerUp) => {
+                context.fillStyle = 'green';
+                context.fillRect(powerUp.x, powerUp.y, 10, 10);
+            });
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
 </body>
 </html>
 
